@@ -14,7 +14,10 @@ namespace FoodyApiTests
         [OneTimeSetUp]
         public void Setup()
         {
-            client = new RestClient("http://144.91.123.158:81/api");
+            string baseUrl = Environment.GetEnvironmentVariable("BASE_URL")
+                ?? "http://144.91.123.158:81/api";
+
+            client = new RestClient(baseUrl);
 
             string uniqueUserName = "user" + DateTime.Now.Ticks;
             string password = "123456";
@@ -27,7 +30,7 @@ namespace FoodyApiTests
                 midName = "Test",
                 lastName = "User",
                 email = $"{uniqueUserName}@abv.bg",
-                password = password,
+                password,
                 rePassword = password
             });
 
@@ -37,7 +40,7 @@ namespace FoodyApiTests
             loginRequest.AddJsonBody(new
             {
                 userName = uniqueUserName,
-                password = password
+                password
             });
 
             var loginResponse = client.Execute(loginRequest);
@@ -74,6 +77,7 @@ namespace FoodyApiTests
 
             Assert.That(lastFoodId, Is.Not.Null.And.Not.Empty);
         }
+
         [Test, Order(2)]
         public void EditFoodTitle_WithValidFoodId_ShouldEditSuccessfully()
         {
@@ -82,13 +86,13 @@ namespace FoodyApiTests
 
             var body = new[]
             {
-        new
-        {
-            path = "/name",
-            op = "replace",
-            value = "Edited Food"
-        }
-    };
+                new
+                {
+                    path = "/name",
+                    op = "replace",
+                    value = "Edited Food"
+                }
+            };
 
             request.AddJsonBody(body);
 
@@ -97,6 +101,7 @@ namespace FoodyApiTests
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
             Assert.That(response.Content, Does.Contain("Successfully edited"));
         }
+
         [Test, Order(3)]
         public void GetAllFoods_ShouldReturnNonEmptyList()
         {
@@ -108,8 +113,10 @@ namespace FoodyApiTests
             var foods = JsonSerializer.Deserialize<List<JsonElement>>(response.Content!);
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-            Assert.That(foods.Count, Is.GreaterThan(0));
+            Assert.That(foods, Is.Not.Null);
+            Assert.That(foods!.Count, Is.GreaterThan(0));
         }
+
         [Test, Order(4)]
         public void DeleteFood_WithValidId_ShouldDeleteSuccessfully()
         {
@@ -121,6 +128,7 @@ namespace FoodyApiTests
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
             Assert.That(response.Content, Does.Contain("Deleted successfully"));
         }
+
         [Test, Order(5)]
         public void CreateFood_WithoutRequiredFields_ShouldReturnBadRequest()
         {
@@ -133,6 +141,7 @@ namespace FoodyApiTests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         }
+
         [Test, Order(6)]
         public void EditFood_WithInvalidId_ShouldReturnNotFound()
         {
@@ -141,13 +150,13 @@ namespace FoodyApiTests
 
             var body = new[]
             {
-        new
-        {
-            path = "/name",
-            op = "replace",
-            value = "Test"
-        }
-    };
+                new
+                {
+                    path = "/name",
+                    op = "replace",
+                    value = "Test"
+                }
+            };
 
             request.AddJsonBody(body);
 
@@ -156,6 +165,7 @@ namespace FoodyApiTests
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
             Assert.That(response.Content, Does.Contain("No food revues"));
         }
+
         [Test, Order(7)]
         public void DeleteFood_WithInvalidId_ShouldReturnNotFound()
         {
